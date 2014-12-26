@@ -35,7 +35,7 @@
 ;;       1. Better handling of the default values in order to have good error messages
 (define-syntax (pdp-require stx)
   (syntax-parse stx
-    [(_ mod:str name:pdp-require-form ... kw:keywords)
+    [(_ mod name:pdp-require-form ... kw:keywords)
      (define apply-prefix (attribute kw.apply-prefix))
      (define default-value (attribute kw.default-value))
      #`(begin
