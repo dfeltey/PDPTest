@@ -15,8 +15,14 @@
 
 (begin-for-syntax
   (define RACKUNIT-PREFIX #'ru:)
+
   (define-syntax-class bindings
-    (pattern ([x e] ...))))
+    (pattern ([x e] ...)))
+
+  (define-splicing-syntax-class opt-bindings
+    (pattern (~optional bs:bindings
+                        #:defaults ([bs #'()]))
+             #:with bindings #'bs)))
 
 ;; This macro does not exactly generate the best possible wrapper
 ;; It generates syntax from Rackunit functions which is not ideal,
@@ -26,9 +32,9 @@
     [(_ name:id)
      #`(define-syntax (name stx)
          (syntax-parse stx 
-           [(_  b:bindings . rest)
+           [(_  b:opt-bindings . rest)
             (define orig-name (format-id #'name "~a~a" RACKUNIT-PREFIX #'name))
-            #`(let b
+            #`(letrec b.bindings
                 (#,orig-name . rest))]))]))
 
 (define-syntax (define-test-forms/provide stx)
