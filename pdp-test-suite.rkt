@@ -22,11 +22,13 @@
   ;; TODO: fill out this test case syntax class
   (define-syntax-class test
     (pattern t:expr))
-
+  
+  ;; the test forms need to be more specific..
   (define-splicing-syntax-class defs+tests
     (pattern (~seq d:definition ...
                    t:test ...)
-             #:with defs-stx #'(d ...)
+             #:with defs-stx #'(quote (d ...))
+             #:with defs #'(begin d ...)
              #:with expr-stx #'(t ...))))
 
 
@@ -36,9 +38,19 @@
 (define-syntax (define-pdp-test-suite stx)
   (syntax-parse stx
     [(_ dt:defs+tests ...)
-     #'(printf "foo")]))
+     #'(begin (printf "foo\n")
+              dt.defs ...
+              (list dt.defs-stx ...))
+              ]))
 
-(define-pdp-test-suite (define x 5) (define "5") (printf "6"))
+(define-pdp-test-suite 
+  (define x 5) 
+  (define y "5") 
+  (printf "6")
+  (printf "blah")
+  (define w 1)
+  (define z 2)
+  )
 
 
 
