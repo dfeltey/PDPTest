@@ -11,7 +11,8 @@
 
 (require (for-syntax syntax/parse
                      racket/syntax)
-         (prefix-in ru: rackunit))
+         (prefix-in ru: rackunit)
+         "structs.rkt")
 
 (begin-for-syntax
   (define RACKUNIT-PREFIX #'ru:)
@@ -24,10 +25,32 @@
                         #:defaults ([bs #'()]))
              #:with bindings #'bs)))
 
+(define-syntax (make-test-wrapper-form stx)
+  (syntax-parse stx
+    [(_ name:id)
+     #`(define-syntax (name stx)
+         (syntax-parse stx
+           [(_ b:opt-bindings  . rest)
+            (define orig-name (format-id #'name "~a~a" RACKUNIT-PREFIX #'name))
+            #`(pdp-test-case (quote b.bindings)
+                             (letrec b.bindings
+                               (ru:delay-test 
+                                (#,orig-name . rest))))]))]))
+
+(define-syntax (define-test-forms/provide stx)
+  (syntax-parse stx
+    [(_ test ...)
+     #'(begin
+         (provide test ...)
+         (make-test-wrapper-form test) ...)]))
+                        
+
+
+
 ;; This macro does not exactly generate the best possible wrapper
 ;; It generates syntax from Rackunit functions which is not ideal,
 ;; but it probably the only way to allow let bindings within test cases
-(define-syntax (make-wrapper-form stx)
+(define-syntax (make-check-wrapper-form stx)
   (syntax-parse stx 
     [(_ name:id)
      #`(define-syntax (name stx)
@@ -37,14 +60,14 @@
             #`(letrec b.bindings
                 (#,orig-name . rest))]))]))
 
-(define-syntax (define-test-forms/provide stx)
+(define-syntax (define-check-forms/provide stx)
   (syntax-parse stx
     [(_ test ...)
      #'(begin
          (provide test ...)
-         (make-wrapper-form test) ...)]))
+         (make-check-wrapper-form test) ...)]))
 
-(define-test-forms/provide 
+(define-check-forms/provide 
   check-eq?
   check-not-eq?
   check-eqv?
@@ -61,4 +84,17 @@
   check-regexp-match
   check
   fail)
+
+(define-test-forms/provide
+  test-check
+  test-pred
+  test-equal?
+  test-eq?
+  test-eqv?
+  test-=
+  test-true
+  test-false
+  test-not-false
+  test-exn
+  test-not-exn)
 
