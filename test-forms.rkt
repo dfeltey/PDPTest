@@ -30,9 +30,10 @@
     [(_ name:id)
      #`(define-syntax (name stx)
          (syntax-parse stx
-           [(_ b:opt-bindings  . rest)
+           [(_ b:opt-bindings . rest)
             (define orig-name (format-id #'name "~a~a" RACKUNIT-PREFIX #'name))
             #`(pdp-test-case (quote b.bindings)
+                             (quote #,stx)
                              (letrec b.bindings
                                (ru:delay-test 
                                 (#,orig-name . rest))))]))]))

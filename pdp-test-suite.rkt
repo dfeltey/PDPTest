@@ -1,5 +1,5 @@
 #lang racket
-(require rackunit)
+(require "test-forms.rkt" "structs.rkt")
 (require (for-syntax syntax/parse
                      racket/syntax))
 (require racket/pretty)
@@ -21,7 +21,8 @@
   
   ;; TODO: fill out this test case syntax class
   (define-syntax-class test
-    (pattern t:expr))
+    #:literals (test-equal?)
+    (pattern (test-equal? . rest)))
   
   ;; the test forms need to be more specific..
   (define-splicing-syntax-class defs+tests
@@ -29,27 +30,31 @@
                    t:test ...)
              #:with defs-stx #'(quote (d ...))
              #:with defs #'(begin d ...)
-             #:with expr-stx #'(t ...))))
+             #:with expr-stx #'(t ...)
+             #:with test-group #'(pdp-test-group (list (quote d) ...)
+                                                 (list t ...))
+             )))
 
 
-(define-struct pdp-test-suite (defs tests))
 
 
 (define-syntax (define-pdp-test-suite stx)
   (syntax-parse stx
-    [(_ dt:defs+tests ...)
-     #'(begin (printf "foo\n")
-              dt.defs ...
-              (list dt.defs-stx ...))
-              ]))
+    [(_ name:id dt:defs+tests ...)
+     #'(define name
+         (pdp-test-suite
+         (let ()
+           dt.defs ...
+           (list dt.test-group ...))))]))
 
-(define-pdp-test-suite 
+(define-pdp-test-suite t
   (define x 5) 
   (define y "5") 
-  (printf "6")
-  (printf "blah")
-  (define w 1)
-  (define z 2)
+  (test-equal? "string->number" (string->number y) x) 
+  (define z 6)
+  (test-equal? "foo" (- z 2) x)
+  (define two "two")
+  (test-equal? "BAD" (+ two two) 4)
   )
 
 
