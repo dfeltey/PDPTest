@@ -4,6 +4,8 @@
                      racket/syntax))
 (require racket/pretty)
 
+(provide define-pdp-test-suite)
+
 (define test
   #'(define (foo bar)
       (printf "testing\n") 
