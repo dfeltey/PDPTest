@@ -1,6 +1,6 @@
 #lang racket
 
-(provide pdp-require)
+(provide pdp-require pdp-require/bsl)
 
 (require (for-syntax syntax/parse racket/syntax))
 (require (only-in rackunit dynamic-require/expose))
@@ -30,3 +30,17 @@
                    [(req ...) #'prf.req-ids])
        #'(begin
            (define def (dynamic-require/expose/safe prf.mod req)) ...))]))
+
+(define-syntax (pdp-require/bsl stx)
+  (syntax-parse stx
+    [(_ file fn:id ...)
+     #`(begin
+         (require file)
+         (check-binding fn) ...)]))
+
+(define-syntax (check-binding stx)
+  (syntax-parse stx
+    [(_ fn:id)
+     (if (identifier-binding #'fn)
+         #'(begin)
+         #'(define (fn . args) (error 'pdp-require "~a not provided" (quote fn))))]))
