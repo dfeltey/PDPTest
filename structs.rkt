@@ -9,15 +9,15 @@
 
 (require rackunit racket/pretty)
 
-(struct pdp-test-suite (tests))
+(struct pdp-test-suite (name tests))
 (struct pdp-test-group (definitions test-cases))
 (struct pdp-test-case (bindings stx test))
 
 
 (struct pdp-score-result (successes failures errors tests) #:transparent)
 
-(define (print-score-result score-result report-file)
-  (fprintf report-file "Overall Results:\n")
+(define (print-score-result score-result report-file name)
+  (fprintf report-file "Results for Suite ~a:\n" name)
   (fprintf report-file "  Test Successes: ~a\n" (pdp-score-result-successes score-result))
   (fprintf report-file "  Test Failures: ~a\n" (pdp-score-result-failures score-result))
   (fprintf report-file "  Test Errors: ~a\n" (pdp-score-result-errors score-result))
@@ -28,6 +28,19 @@
   (fprintf report-file "Normalized Score: ~a/10\n"
            (floor (+ 1/2 (* 10 (/ (pdp-score-result-successes score-result)
                                   (pdp-score-result-tests score-result)))))))
+
+(define (print-overall-score-result score-results report-file)
+  (fprintf report-file "Overall Results:\n")
+  (fprintf report-file "  Test Successes: ~a\n" (apply + (map pdp-score-result-successes score-results)))
+  (fprintf report-file "  Test Failures: ~a\n" (apply + (map pdp-score-result-failures score-results)))
+  (fprintf report-file "  Test Errors: ~a\n" (apply + (map pdp-score-result-errors score-results)))
+  (fprintf report-file "\nRaw Score: ~a/~a\n"
+           (apply + (map pdp-score-result-successes score-results))
+           (apply + (map pdp-score-result-tests score-results)))
+  
+  (fprintf report-file "Normalized Score: ~a/10\n"
+           (floor (+ 1/2 (* 10 (/ (apply + (map (lambda (sr) (/ (pdp-score-result-successes sr) (pdp-score-result-tests sr))) score-results))
+                                  (length score-results)))))))
 
 
 (define (make-pdp-score-result)
@@ -73,12 +86,13 @@
   (define report-file-name (string-append "pdp-test-results-" student-id ".txt"))
   (define report-file (open-output-file report-file-name))
   (fprintf report-file "PDP Test Report for ~a\n\n" student-id)
-  (define score-result
-    (for/fold ([score-result (make-pdp-score-result)])
+  (define score-results
+    (for/fold ([score-results '() #;(make-pdp-score-result)])
               ([test-suite (in-list test-suites)])
-      (process-pdp-test-suite test-suite report-file score-result)))
+      (append score-results
+              (list (process-pdp-test-suite test-suite report-file (make-pdp-score-result) #;score-result)))))
   (fprintf report-file "\n")
-  (print-score-result score-result report-file)
+  (print-overall-score-result score-results report-file)
   (close-output-port report-file))
 
 ;; process-pdp-test-suite : pdp-test-suite output-port -> pdp-score-result
@@ -87,6 +101,7 @@
 ;;         and the number of tests run
 (define (process-pdp-test-suite test-suite report-file [score-result (make-pdp-score-result)])
   (define test-groups (pdp-test-suite-tests test-suite))
+  (define name (pdp-test-suite-name test-suite))
   (for/fold ([score-result score-result])
             ([test-group (in-list test-groups)])
     (define defs (pdp-test-group-definitions test-group))
@@ -95,12 +110,16 @@
     (for ([def (in-list defs)])
       (pdp-pretty-print def report-file #:prefix "\t"))
     (fprintf report-file "\n")
-    (for/fold ([score-result score-result])
-              ([test-case (in-list test-cases)])
-      (define stx (pdp-test-case-stx test-case))
-      (fprintf report-file "Test Case: \n")
-      (pdp-pretty-print stx report-file #:prefix "  ")
-      (process/print-test-result test-case report-file score-result))))
+    (define suite-score-result
+      (for/fold ([score-result score-result])
+                ([test-case (in-list test-cases)])
+        (define stx (pdp-test-case-stx test-case))
+        (fprintf report-file "Test Case: \n")
+        (pdp-pretty-print stx report-file #:prefix "  ")
+        (process/print-test-result test-case report-file score-result)))
+    (fprintf "\n")
+    (print-score-result suite-score-result report-file name)
+    suite-score-result))
 
 
 

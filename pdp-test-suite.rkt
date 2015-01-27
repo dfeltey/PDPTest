@@ -43,11 +43,12 @@
     [(_ name:id dt:defs+tests ...)
      #'(define name
          (pdp-test-suite
+          'name
          (let ()
            dt.defs ...
            (list dt.test-group ...))))]))
 
-(define-pdp-test-suite t
+#;(define-pdp-test-suite t
   (define x 5) 
   (define y "5") 
   (test-equal? "string->number" (string->number y) x) 
