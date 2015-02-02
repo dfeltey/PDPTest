@@ -7,7 +7,7 @@
 (provide process-pdp-test-suite
          run-pdp-test-suites)
 
-(require rackunit racket/pretty)
+(require rackunit racket/pretty racket/sandbox)
 
 (struct pdp-test-suite (name tests))
 (struct pdp-test-group (definitions test-cases))
@@ -25,7 +25,7 @@
            (pdp-score-result-successes score-result)
            (pdp-score-result-tests score-result))
   
-  (fprintf report-file "Normalized Score: ~a/10\n"
+  (fprintf report-file "Normalized Score: ~a/10\n\n"
            (floor (+ 1/2 (* 10 (/ (pdp-score-result-successes score-result)
                                   (pdp-score-result-tests score-result)))))))
 
@@ -38,7 +38,7 @@
            (apply + (map pdp-score-result-successes score-results))
            (apply + (map pdp-score-result-tests score-results)))
   
-  (fprintf report-file "Normalized Score: ~a/10\n"
+  (fprintf report-file "Normalized Score: ~a/10\n\n"
            (floor (+ 1/2 (* 10 (/ (apply + (map (lambda (sr) (/ (pdp-score-result-successes sr) (pdp-score-result-tests sr))) score-results))
                                   (length score-results)))))))
 
@@ -102,6 +102,7 @@
 (define (process-pdp-test-suite test-suite report-file [score-result (make-pdp-score-result)])
   (define test-groups (pdp-test-suite-tests test-suite))
   (define name (pdp-test-suite-name test-suite))
+  (fprintf report-file "\nTest Name: ~a\n" name)
   (for/fold ([score-result score-result])
             ([test-group (in-list test-groups)])
     (define defs (pdp-test-group-definitions test-group))
@@ -117,17 +118,19 @@
         (fprintf report-file "Test Case: \n")
         (pdp-pretty-print stx report-file #:prefix "  ")
         (process/print-test-result test-case report-file score-result)))
-    (fprintf "\n")
+    (fprintf report-file "\n")
     (print-score-result suite-score-result report-file name)
     suite-score-result))
 
 
-
+(struct out-of-time ())
 
 ;; run-pdp-test-case : pdp-test-case -> test-result
 (define (run-pdp-test-case ptc)
   (define test (pdp-test-case-test ptc))
-  (first (run-test test)))
+  (with-handlers ([exn:fail:resource? (lambda (e) (out-of-time))])
+    (with-limits 5 #f 
+                 (first (run-test test)))))
 
 ;; process/print-test-result : pdp-test-case output-port -> score-result
 (define (process/print-test-result ptc report-file score-result)
@@ -148,6 +151,9 @@
      (fprintf report-file "Test Result: Error\n")
      (print-error-exn (test-error-result tr) report-file)
      (fprintf report-file "\n")
+     (add-error score-result)]
+    [(out-of-time? tr)
+     (fprintf report-file "Test Result: Error out of time\n\n")
      (add-error score-result)]
     [else (printf "Unexpected test-result: ~a\n" tr)
           (error "unexpected test result")]))

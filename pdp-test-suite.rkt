@@ -16,22 +16,29 @@
 (begin-for-syntax
   (define-syntax-class definition
     #:literals (define define-values)
-    (pattern (define . rest)
-             #:with def-stx #'(define . rest))
-    (pattern (define-values . rest)
+    (pattern (define name body)
+             #:with def-stx #'(define name body)
+             #:with handled-def
+             #`(define name (with-handlers ([exn:fail? (lambda (e) (format "Error: Failed to define `~a`" (quote name)))])
+                              body))
+             )
+    #;(pattern (define-values . rest)
              #:with def-stx #'(define-values . rest)))
   
   ;; TODO: fill out this test case syntax class
   (define-syntax-class test
-    #:literals (test-equal?)
-    (pattern (test-equal? . rest)))
+    #:literals (test-equal? test-=)
+    (pattern (test-equal? . rest))
+    (pattern (test-= . rest))
+    (pattern (test-true . rest))
+    (pattern (test-false . rest)))
   
   ;; the test forms need to be more specific..
   (define-splicing-syntax-class defs+tests
     (pattern (~seq d:definition ...
                    t:test ...)
              #:with defs-stx #'(quote (d ...))
-             #:with defs #'(begin d ...)
+             #:with defs #'(begin d.handled-def ...)
              #:with expr-stx #'(t ...)
              #:with test-group #'(pdp-test-group (list (quote d) ...)
                                                  (list t ...))
