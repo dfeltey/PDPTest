@@ -31,7 +31,8 @@
     (pattern (test-equal? . rest))
     (pattern (test-= . rest))
     (pattern (test-true . rest))
-    (pattern (test-false . rest)))
+    (pattern (test-false . rest))
+    (pattern (test-pred . rest)))
   
   ;; the test forms need to be more specific..
   (define-splicing-syntax-class defs+tests
