@@ -19,8 +19,13 @@
     (pattern (define name body)
              #:with def-stx #'(define name body)
              #:with handled-def
-             #`(define name (with-handlers ([exn:fail? (lambda (e) (format "Error: Failed to define `~a`" (quote name)))])
-                              body))
+             #`(define name 
+                 (with-handlers 
+                   ([exn:fail? 
+                     (λ (exn)
+                       (format "Error: Failed to define `~a`, because: ~a" 
+                               (quote name) (exn-message exn)))])
+                   body))
              )
     #;(pattern (define-values . rest)
              #:with def-stx #'(define-values . rest)))
