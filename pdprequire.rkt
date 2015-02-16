@@ -6,8 +6,13 @@
 (require (only-in rackunit dynamic-require/expose))
 
 (define (dynamic-require/expose/safe mod name)
-  (with-handlers ([exn:fail:contract:variable? (lambda (exn) (lambda args ((error (format "function ~a is not defined" name)))))]
-                  [exn:fail:filesystem? (lambda (exn) (lambda args (error (format "module ~a does not exist" mod))))])
+  ;; if name is undefined, inner function in exn handler is the require result
+  (with-handlers ([exn:fail:syntax?
+                   (λ _ (λ _ (error (format "function or var ~a undefined" name))))]
+                  [exn:fail:contract:variable? 
+                   (λ _ (λ _ (error (format "function ~a undefined" name))))]
+                  [exn:fail:filesystem? 
+                   (λ _ (λ _ (error (format "module ~a does not exist" mod))))])
     (dynamic-require/expose mod name)))
 
 (begin-for-syntax
