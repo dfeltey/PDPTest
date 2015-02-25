@@ -37,7 +37,8 @@
     (pattern (test-= . rest))
     (pattern (test-true . rest))
     (pattern (test-false . rest))
-    (pattern (test-pred . rest)))
+    (pattern (test-pred . rest))
+    (pattern (test-check . rest)))
   
   ;; the test forms need to be more specific..
   (define-splicing-syntax-class defs+tests
@@ -84,4 +85,4 @@
   )
 
 ;; this should introduce the identifier `name` to be used for running and printing
-;; the resutls of the test suite
+;; the results of the test suite

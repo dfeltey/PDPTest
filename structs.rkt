@@ -84,7 +84,7 @@
 ;; EFFECT: Runs the test suites and generates a test report
 (define (run-pdp-test-suites student-id . test-suites)
   (define report-file-name (string-append "pdp-test-results-" student-id ".txt"))
-  (define report-file (open-output-file report-file-name))
+  (define report-file (open-output-file report-file-name #:exists 'replace))
   (fprintf report-file "PDP Test Report for ~a\n\n" student-id)
   (define score-results
     (for/fold ([score-results '() #;(make-pdp-score-result)])
