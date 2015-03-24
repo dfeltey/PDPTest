@@ -32,7 +32,7 @@
   
   ;; TODO: fill out this test case syntax class
   (define-syntax-class test
-    #:literals (test-equal? test-=)
+    #:literals (test-equal? test-= test-true test-false test-pred test-check)
     (pattern (test-equal? . rest))
     (pattern (test-= . rest))
     (pattern (test-true . rest))
@@ -60,9 +60,9 @@
      #'(define name
          (pdp-test-suite
           'name
-         (let ()
-           dt.defs ...
-           (list dt.test-group ...))))]))
+          (let ()
+            dt.defs ...
+            (list dt.test-group ...))))]))
 
 #;(define-pdp-test-suite t
   (define x 5) 
