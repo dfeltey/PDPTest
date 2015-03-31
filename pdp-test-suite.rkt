@@ -38,31 +38,32 @@
     (pattern (test-true . rest))
     (pattern (test-false . rest))
     (pattern (test-pred . rest))
-    (pattern (test-check . rest)))
+    (pattern (test-check . rest))
+    (pattern (bad-test-form . rest) 
+             #:fail-when #t 
+             (format "bad test form: ~a"  (syntax->datum #'bad-test-form))))
   
   ;; the test forms need to be more specific..
   (define-splicing-syntax-class defs+tests
-    (pattern (~seq d:definition ...
-                   t:test ...)
+    (pattern (~seq (~or d:definition t:test) ...)
              #:with defs-stx #'(quote (d ...))
              #:with defs #'(begin d.handled-def ...)
              #:with expr-stx #'(t ...)
              #:with test-group #'(pdp-test-group (list (quote d) ...)
-                                                 (list t ...))
-             )))
+                                                 (list t ...)))))
 
 
 
 
 (define-syntax (define-pdp-test-suite stx)
   (syntax-parse stx
-    [(_ name:id dt:defs+tests ...)
+    [(_ name:id dt:defs+tests)
      #'(define name
          (pdp-test-suite
           'name
           (let ()
-            dt.defs ...
-            (list dt.test-group ...))))]))
+            dt.defs
+            (list dt.test-group))))]))
 
 #;(define-pdp-test-suite t
   (define x 5) 
