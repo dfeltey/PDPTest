@@ -32,13 +32,14 @@
   
   ;; TODO: fill out this test case syntax class
   (define-syntax-class test
-    #:literals (test-equal? test-= test-true test-false test-pred test-check)
+    #:literals (test-equal? test-= test-true test-false test-pred test-check test-set=?)
     (pattern (test-equal? . rest))
     (pattern (test-= . rest))
     (pattern (test-true . rest))
     (pattern (test-false . rest))
     (pattern (test-pred . rest))
     (pattern (test-check . rest))
+    (pattern (test-set=? . rest))
     (pattern (bad-test-form . rest) 
              #:fail-when #t 
              (format "bad test form: ~a"  (syntax->datum #'bad-test-form))))

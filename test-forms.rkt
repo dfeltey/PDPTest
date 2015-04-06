@@ -86,6 +86,9 @@
   check
   fail)
 
+(define-syntax-rule (ru:test-set=? msg s1 s2)
+  (ru:test-check msg set=? s1 s2))
+
 (define-test-forms/provide
   test-check
   test-pred
@@ -97,5 +100,5 @@
   test-false
   test-not-false
   test-exn
-  test-not-exn)
-
+  test-not-exn
+  test-set=?)
